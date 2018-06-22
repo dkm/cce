@@ -1,5 +1,6 @@
 use reqwest::Client;
 
+use filters::Filters;
 use compiler::Compiler;
 use language::Language;
 use source::Output;
@@ -29,14 +30,17 @@ pub fn get_compilers(client: Client, host: &str, language: Option<&str>) -> Vec<
     }
 }
 
-pub fn compile(client: Client, host: &str, src: String, compiler: &str, args: String) -> String {
+pub fn compile(client: Client, host: &str,
+               src: String, compiler: &str,
+               filters: &Filters,
+               args: String) -> String {
     let filters = json!(
         {
-            "intel": true,
-            "demangle": true,
-            "directives": true,
-            "comments": true,
-            "labels": true
+            "intel": filters.intel,
+            "demangle": filters.demangle,
+            "directives": filters.directives,
+            "comments": filters.comments,
+            "labels": filters.labels
         }
     );
 

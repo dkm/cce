@@ -19,7 +19,9 @@ mod requests;
 mod source;
 mod tempedit;
 mod url;
+mod filters;
 
+use filters::Filters;
 use requests::{compile, get_compilers, get_languages};
 use tempedit::{edit_snippet, read_src};
 use url::get_url;
@@ -64,6 +66,41 @@ fn main() {
                         .help("get an URL for given compilation")
                 )
                 .arg(
+                    Arg::with_name("filters-comments")
+                        .long("filters-comments")
+                        .default_value("1")
+                        .takes_value(true)
+                        .help("filters")
+                )
+                .arg(
+                    Arg::with_name("filters-labels")
+                        .long("filters-labels")
+                        .default_value("1")
+                        .takes_value(true)
+                        .help("filters")
+                )
+                .arg(
+                    Arg::with_name("filters-directives")
+                        .long("filters-directives")
+                        .default_value("1")
+                        .takes_value(true)
+                        .help("filters")
+                )
+                .arg(
+                    Arg::with_name("filters-demangle")
+                        .long("filters-demangle")
+                        .default_value("1")
+                        .takes_value(true)
+                        .help("filters")
+                )
+                .arg(
+                    Arg::with_name("filters-intel")
+                        .long("filters-intel")
+                        .default_value("1")
+                        .takes_value(true)
+                        .help("filters")
+                )
+                .arg(
                     Arg::with_name("id")
                         .takes_value(true)
                         .help(" compiler id to use for compilation")
@@ -86,11 +123,13 @@ fn main() {
     headers.set(Accept(vec![qitem(mime::APPLICATION_JSON)]));
     headers.set(ContentType(mime::APPLICATION_JSON));
 
+    let host = matches.value_of("host").unwrap();
+
     let client = reqwest::Client::builder()
         .default_headers(headers)
         .build()
         .unwrap();
-    let host = matches.value_of("host").unwrap();
+
 
     if let Some(matches) = matches.subcommand_matches("list") {
         if let Some(_matches) = matches.subcommand_matches("langs") {
@@ -106,6 +145,15 @@ fn main() {
             }
         }
     } else if let Some(matches) = matches.subcommand_matches("compile") {
+
+        let asm_filters = Filters{
+            intel: matches.value_of("filters-intel").unwrap().to_string() != "0",
+            demangle: matches.value_of("filters-demangle").unwrap().to_string() != "0",
+            directives: matches.value_of("filters-directives").unwrap().to_string() != "0",
+            comments: matches.value_of("filters-comments").unwrap().to_string() != "0",
+            labels: matches.value_of("filters-labels").unwrap().to_string() != "0"
+        };
+
         let src = match matches.value_of("file") {
             Some(path) => read_src(path),
             None => edit_snippet(),
@@ -113,10 +161,10 @@ fn main() {
         let compiler = matches.value_of("id").unwrap();
         let args = matches.value_of("args").unwrap_or("").to_string();
         if matches.is_present("url") {
-            let url = get_url(&src, &host, &compiler, &args);
+            let url = get_url(&src, &host, &compiler, &asm_filters, &args);
             println!("URL: {}", url);
         }
-        let asm = compile(client, &host, src, compiler, args);
+        let asm = compile(client, &host, src, compiler, &asm_filters, args);
         println!("{}", asm);
     }
 }

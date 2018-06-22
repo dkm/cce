@@ -1,6 +1,7 @@
 use urlparse::quote;
+use filters::Filters;
 
-pub fn get_url(src: &String, host: &str, compiler: &str, args: &String) -> String {
+pub fn get_url(src: &String, host: &str, compiler: &str, filters: &Filters, args: &String) -> String {
     let codeeditor = json!(
         {
             "type": "component",
@@ -22,10 +23,10 @@ pub fn get_url(src: &String, host: &str, compiler: &str, args: &String) -> Strin
             "componentState": {
                 "source": 1,
                 "filters": {
-                    "commentOnly": true,
-                    "directives": true,
-                    "intel": true,
-                    "labels": true,
+                    "commentOnly": filters.comments,
+                    "directives": filters.directives,
+                    "intel": filters.intel,
+                    "labels": filters.labels,
                     "trim": true
                 },
                 "options": args,
